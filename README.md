@@ -1,51 +1,164 @@
-# Rely Health — Care Navigator Demo (OpenAI / GPT-4o)
+# Rely Health — Care Navigator Demo (Ollama / Local)
 
-Same app as the Anthropic version, with GPT-4o as the backend model.
-The only files that changed: `src/lib/openai.js` and the import in `src/hooks/useChat.js`.
-Everything else — guardrails, prompt, components, hook logic — is identical.
+Same app as the Anthropic version, running entirely on your local machine.
+No API key. No cost. No data leaves your computer.
 
-## Setup
+## Step 1 — Install Ollama
 
+**Mac:**
 ```bash
+brew install ollama
+```
+Or download the installer from https://ollama.com/download
+
+**Windows:**
+Download and run the installer from https://ollama.com/download
+
+**Linux:**
+```bash
+curl -fsSL https://ollama.com/install.sh | sh
+```
+
+Verify it installed:
+```bash
+ollama --version
+```
+
+---
+
+## Step 2 — Pull a model
+
+This downloads the model to your machine (~2GB for llama3.2):
+```bash
+ollama pull llama3.2
+```
+
+Other good options (pick one):
+```bash
+ollama pull mistral       # great at following instructions
+ollama pull llama3.1:8b   # larger, better reasoning (~5GB)
+ollama pull gemma2        # Google's open model, very capable
+```
+
+See everything you've downloaded:
+```bash
+ollama list
+```
+
+---
+
+## Step 3 — Start Ollama with CORS enabled
+
+The browser (running on port 5173) needs permission to talk to Ollama (port 11434).
+You need to set the OLLAMA_ORIGINS environment variable when starting Ollama.
+
+**Mac/Linux:**
+```bash
+OLLAMA_ORIGINS=http://localhost:5173 ollama serve
+```
+
+**Windows (Command Prompt):**
+```cmd
+set OLLAMA_ORIGINS=http://localhost:5173 && ollama serve
+```
+
+**Windows (PowerShell):**
+```powershell
+$env:OLLAMA_ORIGINS="http://localhost:5173"; ollama serve
+```
+
+Leave this terminal open — Ollama needs to keep running.
+
+---
+
+## Step 4 — Run the app
+
+In a new terminal:
+```bash
+cd rely-health-demo-ollama
 npm install
-cp .env.example .env
-# Set VITE_OPENAI_API_KEY in .env  (https://platform.openai.com/api-keys)
 npm run dev
 ```
+
+Open http://localhost:5173 in your browser.
+
+---
+
+## Changing the model
+
+Open `src/lib/ollama.js` and update the MODEL constant:
+```js
+const MODEL = "llama3.2"; // change to any model from `ollama list`
+```
+
+---
 
 ## Project Structure
 
 ```
 src/
 ├── lib/
-│   ├── openai.js         # OpenAI API client (replaces anthropic.js)
-│   └── guardrails.js     # Unchanged — parses [URGENT]/[SAFE] tags
+│   ├── ollama.js         # Active client — runs locally, no key needed
+│   ├── anthropic.js      # Reference — swap import in useChat.js to use
+│   ├── openai.js         # Reference — swap import in useChat.js to use
+│   └── guardrails.js     # Parses [URGENT]/[SAFE] tags (shared by all clients)
 ├── hooks/
-│   └── useChat.js        # Same logic, imports from openai.js instead
+│   └── useChat.js        # Imports from ollama.js — change this to swap providers
 ├── prompts/
-│   └── careNavigator.js  # Unchanged — same system prompt works on both models
+│   └── careNavigator.js  # System prompt — works across all three providers
 ├── components/
-│   ├── ChatMessage.jsx   # Unchanged
+│   ├── ChatMessage.jsx
 │   └── ChatMessage.module.css
 ├── App.jsx
 └── App.css
 ```
 
-## Anthropic vs OpenAI API differences
+## Switching providers
 
-| | Anthropic | OpenAI |
-|---|---|---|
-| System prompt | Top-level `system` field | First message with `role: "system"` |
-| Response text | `data.content[0].text` | `data.choices[0].message.content` |
-| Auth header | `x-api-key` | `Authorization: Bearer ...` |
-| Model string | `claude-sonnet-4-20250514` | `gpt-4o` |
+To use Anthropic or OpenAI instead, just change one line in `src/hooks/useChat.js`:
 
-## Production TODO
-- [ ] Move API calls to a backend proxy to protect the API key
-- [ ] Strip/anonymize PHI before sending to the API
-- [ ] Log all conversations + guardrail flags (HIPAA audit trail)
-- [ ] Add rate limiting per patient session
-- [ ] Fallback if the model is unavailable
+```js
+// Current (Ollama)
+import { sendMessage } from "../lib/ollama";
+
+// Switch to Anthropic
+import { sendMessage } from "../lib/anthropic";
+
+// Switch to OpenAI
+import { sendMessage } from "../lib/openai";
+```
+
+Then make sure the relevant key is set in your `.env` file.
+
+---
+
+## Anthropic vs OpenAI vs Ollama comparison
+
+| | Anthropic | OpenAI | Ollama |
+|---|---|---|---|
+| Cost | Pay per token | Pay per token | Free |
+| API key | Yes | Yes | No |
+| System prompt | Top-level `system` field | First message `role: "system"` | First message `role: "system"` |
+| Response path | `data.content[0].text` | `data.choices[0].message.content` | `data.message.content` |
+| Base URL | api.anthropic.com | api.openai.com | localhost:11434 |
+| Data privacy | Sent to Anthropic | Sent to OpenAI | Stays on your machine |
+
+---
+
+## Troubleshooting
+
+**"Failed to fetch" error in the browser**
+Ollama isn't running, or it's running without CORS enabled.
+Stop it and restart with: `OLLAMA_ORIGINS=http://localhost:5173 ollama serve`
+
+**Responses are slow**
+Totally normal for local models, especially on first run (the model loads into memory).
+llama3.2 is the fastest option for most machines.
+
+**Model not found error**
+Run `ollama list` to see installed models, then update MODEL in `src/lib/ollama.js`.
+
+---
 
 ## Test Inputs
 
@@ -56,3 +169,8 @@ src/
 | "My pain is an 8 out of 10" | [URGENT] ER escalation |
 | "Redness around my incision" | [URGENT] infection flag |
 | "I forgot my medication this morning" | [SAFE] gentle guidance |
+
+Note: Local models are generally less reliable at following structured output formats
+like [URGENT]/[SAFE] compared to Claude or GPT-4o. If the guardrail badge doesn't
+appear, that's expected — it's a good thing to bring up in the interview when
+discussing why model choice matters in production clinical systems.

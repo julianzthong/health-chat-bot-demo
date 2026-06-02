@@ -1,14 +1,11 @@
 import { useState, useEffect, useRef } from "react";
-import { sendMessage } from "../lib/openai"; // <-- only change from Anthropic version
+import { sendMessage } from "../lib/ollama"; // <-- only change from Anthropic version
 import { parseGuardrail } from "../lib/guardrails";
 import { CARE_NAVIGATOR_PROMPT } from "../prompts/careNavigator";
 
 /**
- * useChat hook
- *
- * Identical logic to the Anthropic version — the only difference is the
- * import above. This is intentional: keeping provider logic in lib/ means
- * hooks, components, and prompts never need to change when you swap models.
+ * useChat hook — identical logic to the Anthropic/OpenAI versions.
+ * Only the import above changed.
  */
 export function useChat() {
   const [messages, setMessages] = useState([]);
