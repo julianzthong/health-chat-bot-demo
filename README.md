@@ -1,4 +1,4 @@
-# Rely Health — Care Navigator Demo (Ollama / Local)
+# Health Chat Bot  — Care Navigator Demo (Ollama / Local)
 
 Same app as the Anthropic version, running entirely on your local machine.
 No API key. No cost. No data leaves your computer.

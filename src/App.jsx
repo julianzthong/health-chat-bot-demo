@@ -30,7 +30,7 @@ export default function App() {
       <header className="header">
         <div className="logo">RH</div>
         <div>
-          <h1>Rely Health — Care Navigator</h1>
+          <h1>Health Chat Bot — Care Navigator</h1>
           <p>Post-discharge support · Demo prototype</p>
         </div>
         <span className="statusBadge">● Active</span>
