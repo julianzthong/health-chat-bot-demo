@@ -28,7 +28,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="header">
-        <div className="logo">RH</div>
+        <div className="logo">HC</div>
         <div>
           <h1>Health Chat Bot — Care Navigator</h1>
           <p>Post-discharge support · Demo prototype</p>

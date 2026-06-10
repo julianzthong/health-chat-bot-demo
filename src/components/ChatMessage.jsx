@@ -13,7 +13,7 @@ export function ChatMessage({ message }) {
 
   return (
     <div className={`${styles.wrapper} ${isBot ? styles.bot : styles.user}`}>
-      <div className={styles.avatar}>{isBot ? "RH" : "You"}</div>
+      <div className={styles.avatar}>{isBot ? "HC" : "You"}</div>
 
       <div
         className={`${styles.bubble} ${
